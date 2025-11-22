@@ -24,9 +24,9 @@
 // ==================== Constants ====================
 const int SCREEN_WIDTH = 80;
 const int SCREEN_HEIGHT = 24;
-const float GRAVITY = 0.5f;
-const float JUMP_FORCE = -2.0f;
-const float MOVE_SPEED = 1.0f;
+const float GRAVITY = 0.4f;
+const float JUMP_FORCE = -3.5f;
+const float MOVE_SPEED = 1.2f;
 const int FRAME_DELAY_MS = 50;
 
 // ==================== Colors (ANSI) ====================
@@ -274,30 +274,30 @@ public:
             entities.emplace_back(i * 3 - 15, 21, 3, 3, EntityType::PLATFORM);
         }
 
-        // Floating platforms
-        entities.emplace_back(20, 15, 4, 1, EntityType::PLATFORM);
-        entities.emplace_back(30, 13, 4, 1, EntityType::PLATFORM);
-        entities.emplace_back(45, 15, 6, 1, EntityType::PLATFORM);
-        entities.emplace_back(60, 12, 4, 1, EntityType::PLATFORM);
-        entities.emplace_back(80, 14, 5, 1, EntityType::PLATFORM);
-        entities.emplace_back(100, 13, 4, 1, EntityType::PLATFORM);
-        entities.emplace_back(120, 15, 6, 1, EntityType::PLATFORM);
-        entities.emplace_back(140, 12, 4, 1, EntityType::PLATFORM);
-        entities.emplace_back(160, 14, 5, 1, EntityType::PLATFORM);
+        // Floating platforms (lowered for reachability)
+        entities.emplace_back(20, 16, 4, 1, EntityType::PLATFORM);
+        entities.emplace_back(30, 14, 4, 1, EntityType::PLATFORM);
+        entities.emplace_back(45, 16, 6, 1, EntityType::PLATFORM);
+        entities.emplace_back(60, 14, 4, 1, EntityType::PLATFORM);
+        entities.emplace_back(80, 15, 5, 1, EntityType::PLATFORM);
+        entities.emplace_back(100, 14, 4, 1, EntityType::PLATFORM);
+        entities.emplace_back(120, 16, 6, 1, EntityType::PLATFORM);
+        entities.emplace_back(140, 14, 4, 1, EntityType::PLATFORM);
+        entities.emplace_back(160, 15, 5, 1, EntityType::PLATFORM);
 
-        // Question blocks with coins
-        entities.emplace_back(25, 12, 2, 2, EntityType::QUESTION_BLOCK);
-        entities.emplace_back(50, 10, 2, 2, EntityType::QUESTION_BLOCK);
-        entities.emplace_back(85, 11, 2, 2, EntityType::QUESTION_BLOCK);
-        entities.emplace_back(110, 10, 2, 2, EntityType::QUESTION_BLOCK);
+        // Question blocks with coins (lowered)
+        entities.emplace_back(25, 13, 2, 2, EntityType::QUESTION_BLOCK);
+        entities.emplace_back(50, 12, 2, 2, EntityType::QUESTION_BLOCK);
+        entities.emplace_back(85, 12, 2, 2, EntityType::QUESTION_BLOCK);
+        entities.emplace_back(110, 12, 2, 2, EntityType::QUESTION_BLOCK);
         entities.emplace_back(145, 11, 2, 2, EntityType::QUESTION_BLOCK);
 
-        // Bricks
-        entities.emplace_back(27, 12, 2, 2, EntityType::BRICK);
-        entities.emplace_back(29, 12, 2, 2, EntityType::BRICK);
-        entities.emplace_back(52, 10, 2, 2, EntityType::BRICK);
-        entities.emplace_back(54, 10, 2, 2, EntityType::BRICK);
-        entities.emplace_back(87, 11, 2, 2, EntityType::BRICK);
+        // Bricks (lowered)
+        entities.emplace_back(27, 13, 2, 2, EntityType::BRICK);
+        entities.emplace_back(29, 13, 2, 2, EntityType::BRICK);
+        entities.emplace_back(52, 12, 2, 2, EntityType::BRICK);
+        entities.emplace_back(54, 12, 2, 2, EntityType::BRICK);
+        entities.emplace_back(87, 12, 2, 2, EntityType::BRICK);
 
         // Coins
         entities.emplace_back(22, 13, 1, 1, EntityType::COIN);
@@ -324,10 +324,10 @@ public:
             }
         }
 
-        // Pipes
-        entities.emplace_back(55, 17, 3, 4, EntityType::PIPE);
-        entities.emplace_back(115, 15, 3, 6, EntityType::PIPE);
-        entities.emplace_back(155, 17, 3, 4, EntityType::PIPE);
+        // Pipes (shorter, easier to jump over)
+        entities.emplace_back(55, 18, 3, 3, EntityType::PIPE);
+        entities.emplace_back(115, 17, 3, 4, EntityType::PIPE);
+        entities.emplace_back(155, 18, 3, 3, EntityType::PIPE);
 
         // Flag at end
         entities.emplace_back(flagPos.x, flagPos.y, 1, 11, EntityType::FLAG);
@@ -813,7 +813,7 @@ public:
                         // Stomp!
                         entity.active = false;
                         score += 100;
-                        mario.vel.y = JUMP_FORCE * 0.7f; // Bounce
+                        mario.vel.y = JUMP_FORCE * 0.9f; // Strong bounce
                     } else if (!mario.invincible) {
                         // Take damage only if not invincible
                         mario.takeDamage();
