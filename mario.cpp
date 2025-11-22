@@ -182,28 +182,21 @@ public:
     }
 
     void moveLeft() {
-        // Accelerate left with max speed cap
-        vel.x -= 0.3f;
-        if (vel.x < -MOVE_SPEED) vel.x = -MOVE_SPEED;
+        // Set velocity directly for responsive controls
+        vel.x = -MOVE_SPEED;
         facingRight = false;
     }
 
     void moveRight() {
-        // Accelerate right with max speed cap
-        vel.x += 0.3f;
-        if (vel.x > MOVE_SPEED) vel.x = MOVE_SPEED;
+        // Set velocity directly for responsive controls
+        vel.x = MOVE_SPEED;
         facingRight = true;
     }
 
     void applyFriction() {
-        // Gradually slow down when no input
-        if (vel.x > 0) {
-            vel.x -= 0.15f;
-            if (vel.x < 0) vel.x = 0;
-        } else if (vel.x < 0) {
-            vel.x += 0.15f;
-            if (vel.x > 0) vel.x = 0;
-        }
+        // Gradual slowdown when no input
+        vel.x *= 0.8f;
+        if (std::abs(vel.x) < 0.1f) vel.x = 0;
     }
 
     void stop() {
