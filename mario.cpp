@@ -182,13 +182,28 @@ public:
     }
 
     void moveLeft() {
-        vel.x = -MOVE_SPEED;
+        // Accelerate left with max speed cap
+        vel.x -= 0.3f;
+        if (vel.x < -MOVE_SPEED) vel.x = -MOVE_SPEED;
         facingRight = false;
     }
 
     void moveRight() {
-        vel.x = MOVE_SPEED;
+        // Accelerate right with max speed cap
+        vel.x += 0.3f;
+        if (vel.x > MOVE_SPEED) vel.x = MOVE_SPEED;
         facingRight = true;
+    }
+
+    void applyFriction() {
+        // Gradually slow down when no input
+        if (vel.x > 0) {
+            vel.x -= 0.15f;
+            if (vel.x < 0) vel.x = 0;
+        } else if (vel.x < 0) {
+            vel.x += 0.15f;
+            if (vel.x > 0) vel.x = 0;
+        }
     }
 
     void stop() {
@@ -649,20 +664,19 @@ public:
             return;
         }
 
-        // Game controls
-        bool moved = false;
+        // Game controls - track movement direction
+        int moveDir = 0; // -1 = left, 0 = none, 1 = right
 
+        // Process all keys in buffer
         while (key != -1) {
             switch (key) {
                 case 'a':
                 case 'A':
-                    mario.moveLeft();
-                    moved = true;
+                    moveDir = -1;
                     break;
                 case 'd':
                 case 'D':
-                    mario.moveRight();
-                    moved = true;
+                    moveDir = 1;
                     break;
                 case 'w':
                 case 'W':
@@ -677,8 +691,14 @@ public:
             key = keyboard.getKey();
         }
 
-        if (!moved) {
-            mario.stop();
+        // Apply movement with momentum
+        if (moveDir < 0) {
+            mario.moveLeft();
+        } else if (moveDir > 0) {
+            mario.moveRight();
+        } else {
+            // Apply friction instead of instant stop
+            mario.applyFriction();
         }
     }
 
@@ -783,16 +803,23 @@ public:
                     break;
 
                 case EntityType::GOOMBA: {
-                    // Check if stomping
-                    float overlapTop = (marioRect.y + marioRect.height) - entityRect.y;
-                    if (mario.vel.y > 0 && overlapTop < 1.0f) {
+                    // Check if stomping - Mario must be falling and hitting from above
+                    // Mario's feet should be near the goomba's head
+                    float marioBottom = marioRect.y + marioRect.height;
+                    float goombaMidY = entityRect.y + entityRect.height * 0.5f;
+
+                    // Stomp if: Mario is falling AND Mario's bottom is above goomba's middle
+                    if (mario.vel.y > 0 && marioBottom < goombaMidY + 1.0f) {
                         // Stomp!
                         entity.active = false;
                         score += 100;
                         mario.vel.y = JUMP_FORCE * 0.7f; // Bounce
-                    } else {
-                        // Take damage
+                    } else if (!mario.invincible) {
+                        // Take damage only if not invincible
                         mario.takeDamage();
+                        // Push Mario away from goomba
+                        mario.vel.x = (mario.pos.x < entity.rect.x) ? -2.0f : 2.0f;
+                        mario.vel.y = -1.5f;
                         if (mario.lives <= 0) {
                             gameOver = true;
                         }
