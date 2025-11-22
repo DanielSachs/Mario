@@ -719,76 +719,84 @@ public:
             }
         }
 
-        // Collision detection
-        Rectangle marioRect = mario.getRect();
+        // Collision detection - process platforms first, then other entities
         mario.onGround = false;
 
+        // First pass: solid collisions (platforms, bricks, pipes)
         for (auto& entity : level.entities) {
             if (!entity.active) continue;
+            if (entity.type != EntityType::PLATFORM &&
+                entity.type != EntityType::BRICK &&
+                entity.type != EntityType::PIPE &&
+                entity.type != EntityType::QUESTION_BLOCK) continue;
 
+            Rectangle marioRect = mario.getRect();
             Rectangle entityRect = entity.rect;
 
             if (!marioRect.intersects(entityRect)) continue;
 
-            switch (entity.type) {
-                case EntityType::PLATFORM:
-                case EntityType::BRICK:
-                case EntityType::PIPE: {
-                    // Calculate overlap
-                    float overlapLeft = (marioRect.x + marioRect.width) - entityRect.x;
-                    float overlapRight = (entityRect.x + entityRect.width) - marioRect.x;
-                    float overlapTop = (marioRect.y + marioRect.height) - entityRect.y;
-                    float overlapBottom = (entityRect.y + entityRect.height) - marioRect.y;
+            if (entity.type == EntityType::QUESTION_BLOCK) {
+                float overlapBottom = (entityRect.y + entityRect.height) - marioRect.y;
+                float overlapTop = (marioRect.y + marioRect.height) - entityRect.y;
 
-                    float minOverlapX = std::min(overlapLeft, overlapRight);
-                    float minOverlapY = std::min(overlapTop, overlapBottom);
-
-                    if (minOverlapY < minOverlapX) {
-                        if (overlapTop < overlapBottom) {
-                            // Landing on top
-                            mario.pos.y = entityRect.y - marioRect.height;
-                            mario.vel.y = 0;
-                            mario.onGround = true;
-                        } else {
-                            // Hitting from below
-                            mario.pos.y = entityRect.y + entityRect.height;
-                            mario.vel.y = 0;
-
-                            if (entity.type == EntityType::BRICK) {
-                                entity.active = false;
-                                score += 10;
-                            }
-                        }
-                    } else {
-                        if (overlapLeft < overlapRight) {
-                            mario.pos.x = entityRect.x - marioRect.width;
-                        } else {
-                            mario.pos.x = entityRect.x + entityRect.width;
-                        }
-                        mario.vel.x = 0;
-                    }
-                    break;
+                if (overlapBottom < overlapTop && mario.vel.y < 0) {
+                    // Hit from below - spawn coin
+                    entity.type = EntityType::BRICK; // Turn into used block
+                    coins++;
+                    score += 100;
+                    mario.vel.y = 0;
+                    mario.pos.y = entityRect.y + entityRect.height;
+                } else if (overlapTop < overlapBottom) {
+                    mario.pos.y = entityRect.y - marioRect.height;
+                    mario.vel.y = 0;
+                    mario.onGround = true;
                 }
+            } else {
+                // Platform, brick, pipe
+                float overlapLeft = (marioRect.x + marioRect.width) - entityRect.x;
+                float overlapRight = (entityRect.x + entityRect.width) - marioRect.x;
+                float overlapTop = (marioRect.y + marioRect.height) - entityRect.y;
+                float overlapBottom = (entityRect.y + entityRect.height) - marioRect.y;
 
-                case EntityType::QUESTION_BLOCK: {
-                    float overlapBottom = (entityRect.y + entityRect.height) - marioRect.y;
-                    float overlapTop = (marioRect.y + marioRect.height) - entityRect.y;
+                float minOverlapX = std::min(overlapLeft, overlapRight);
+                float minOverlapY = std::min(overlapTop, overlapBottom);
 
-                    if (overlapBottom < overlapTop && mario.vel.y < 0) {
-                        // Hit from below - spawn coin
-                        entity.type = EntityType::BRICK; // Turn into used block
-                        coins++;
-                        score += 100;
-                        mario.vel.y = 0;
-                        mario.pos.y = entityRect.y + entityRect.height;
-                    } else if (overlapTop < overlapBottom) {
+                if (minOverlapY < minOverlapX) {
+                    if (overlapTop < overlapBottom) {
+                        // Landing on top
                         mario.pos.y = entityRect.y - marioRect.height;
                         mario.vel.y = 0;
                         mario.onGround = true;
-                    }
-                    break;
-                }
+                    } else {
+                        // Hitting from below
+                        mario.pos.y = entityRect.y + entityRect.height;
+                        mario.vel.y = 0;
 
+                        if (entity.type == EntityType::BRICK) {
+                            entity.active = false;
+                            score += 10;
+                        }
+                    }
+                } else {
+                    if (overlapLeft < overlapRight) {
+                        mario.pos.x = entityRect.x - marioRect.width;
+                    } else {
+                        mario.pos.x = entityRect.x + entityRect.width;
+                    }
+                    mario.vel.x = 0;
+                }
+            }
+        }
+
+        // Second pass: collectibles and enemies (after position is corrected)
+        Rectangle marioRect = mario.getRect();
+        for (auto& entity : level.entities) {
+            if (!entity.active) continue;
+
+            Rectangle entityRect = entity.rect;
+            if (!marioRect.intersects(entityRect)) continue;
+
+            switch (entity.type) {
                 case EntityType::COIN:
                     entity.active = false;
                     coins++;
@@ -797,7 +805,6 @@ public:
 
                 case EntityType::GOOMBA: {
                     // Check if stomping - Mario must be falling and hitting from above
-                    // Mario's feet should be near the goomba's head
                     float marioBottom = marioRect.y + marioRect.height;
                     float goombaMidY = entityRect.y + entityRect.height * 0.5f;
 
@@ -823,6 +830,9 @@ public:
                 case EntityType::FLAG:
                     gameWon = true;
                     score += 1000;
+                    break;
+
+                default:
                     break;
             }
         }
