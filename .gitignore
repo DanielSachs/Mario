@@ -1,0 +1,8 @@
+# Compiled binary
+mario
+
+# Object files
+*.o
+
+# Debug files
+*.dSYM/
